@@ -10,7 +10,6 @@ st.set_page_config(
 )
 
 # Initialize Google Sheets Connection
-# Ensure your secrets.toml has [connections.gsheets] setup
 conn = st.connection("gsheets", type=GSheetsConnection)
 
 # Session State Initialization
@@ -62,7 +61,7 @@ st.sidebar.markdown("""
   * Unchecked = `0` (No / Inactive)
 """)
 
-# IF ADMIN IS LOGGED IN, SHOW DYNAMIC QUESTION SYSTEM
+# IF ADMIN IS LOGGED IN, SHOW ADMIN CONTROLS
 if st.session_state.is_admin:
     st.sidebar.divider()
     st.sidebar.header("🛠️ Dynamic Question System")
@@ -252,11 +251,8 @@ if submit_button:
     new_df = pd.DataFrame([response_data])
     
     try:
-        # Fetch existing data from Google Sheet
         existing_data = conn.read(ttl=0)
         updated_df = pd.concat([existing_data, new_df], ignore_index=False)
-        
-        # Update Google Sheet
         conn.update(data=updated_df)
         
         st.balloons()
