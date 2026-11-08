@@ -10,19 +10,24 @@ st.set_page_config(
     layout="wide"
 )
 
-# Google Sheets Connection using direct dict from secrets
+# Google Sheets Connection using gspread & secrets with automated key cleaning
 def get_gsheet_client():
     scope = [
         "https://www.googleapis.com/auth/spreadsheets",
         "https://www.googleapis.com/auth/drive"
     ]
     
-    # St.secrets থেকে সরাসরি ডিকশনারি তৈরি করা (যাতে \n বা PEM এরর না করে)
+    raw_key = st.secrets["connections"]["gsheets"]["private_key"]
+    if "\\n" in raw_key:
+        formatted_key = raw_key.replace("\\n", "\n")
+    else:
+        formatted_key = raw_key
+
     creds_dict = {
         "type": st.secrets["connections"]["gsheets"]["type"],
         "project_id": st.secrets["connections"]["gsheets"]["project_id"],
         "private_key_id": st.secrets["connections"]["gsheets"]["private_key_id"],
-        "private_key": st.secrets["connections"]["gsheets"]["private_key"].replace("\\n", "\n"),
+        "private_key": formatted_key,
         "client_email": st.secrets["connections"]["gsheets"]["client_email"],
         "client_id": st.secrets["connections"]["gsheets"]["client_id"],
         "auth_uri": st.secrets["connections"]["gsheets"]["auth_uri"],
@@ -52,7 +57,11 @@ def save_data_to_sheet(new_row_df):
     try:
         client = get_gsheet_client()
         sheet = client.open_by_url(SPREADSHEET_URL).sheet1
-        row_values = new_row_df.iloc[0].tolist()
+        
+        # Convert numpy types (int64, float64) to native python types to fix JSON serialization error
+        raw_values = [val.item() if hasattr(val, "item") else val for val in new_row_df.iloc[0]]
+        row_values = ["" if pd.isna(v) else v for v in raw_values]
+        
         sheet.append_row(row_values)
         return True
     except Exception as e:
@@ -66,29 +75,29 @@ if "custom_questions" not in st.session_state:
 if "is_admin" not in st.session_state:
     st.session_state.is_admin = False
 
-st.title("Impact of Costing Accuracy in RMG Industry Survey")
+st.title("📋 Impact of Costing Accuracy in RMG Industry Survey")
 st.markdown("Academic Research Survey on Merchandising Performance, Profitability, Buyer Satisfaction, and Order Execution Efficiency.")
 st.divider()
 
 # ==========================================
 # SIDEBAR: ADMIN LOGIN, CODING LEGEND & PANEL
 # ==========================================
-st.sidebar.header("Admin Portal Access")
+st.sidebar.header("🔐 Admin Portal Access")
 
 admin_password_input = st.sidebar.text_input("Enter Admin Password:", type="password", placeholder="Enter password...")
-ADMIN_SECRET_KEY = "jamilmc"
+ADMIN_SECRET_KEY = "admin123"
 
 if admin_password_input == ADMIN_SECRET_KEY:
     st.session_state.is_admin = True
-    st.sidebar.success("Admin Access Granted!")
+    st.sidebar.success("🔓 Admin Access Granted!")
 else:
     if admin_password_input:
-        st.sidebar.error("Incorrect Password!")
+        st.sidebar.error("❌ Incorrect Password!")
     st.session_state.is_admin = False
 
 # Scale & Coding Legend in Sidebar
 st.sidebar.divider()
-st.sidebar.header("Scale & Coding Legend")
+st.sidebar.header("📊 Scale & Coding Legend")
 st.sidebar.markdown("""
 * **Slider Scale (0-5):** 
   * `0` = Not Applicable / Strongly Disagree
@@ -129,7 +138,7 @@ if st.session_state.is_admin:
             "Select Question Type:",
             ["Slider (0-5)", "Grading Scale (1-5)", "Checkbox"]
         )
-        add_btn = st.form_submit_button("Add Question")
+        add_btn = st.form_submit_button("➕ Add Question")
 
         if add_btn:
             if new_q_code and new_q_text:
@@ -149,7 +158,7 @@ if st.session_state.is_admin:
         for q in st.session_state.custom_questions:
             st.sidebar.caption(f"**[{q['code']}]** {q['text']} *({q['type']})*")
 else:
-    st.sidebar.info(" Admin features are locked. Enter the correct password above to unlock.")
+    st.sidebar.info("💡 Admin features are locked. Enter the correct password above to unlock.")
 
 # ==========================================
 # MAIN SURVEY FORM
@@ -278,7 +287,7 @@ st.header("SECTION C: Open-Ended / Qualitative Feedback")
 q_challenges = st.text_area("1. What are the major challenges you face while preparing pre-costing sheets for complex garment styles?")
 q_erp = st.text_area("2. How does your factory leverage digital tools to improve overall cost efficiency?")
 
-submit_button = st.button("Submit Survey Response", type="primary")
+submit_button = st.button("🚀 Submit Survey Response", type="primary")
 
 # ==========================================
 # DATA SAVING TO GOOGLE SHEETS
@@ -305,7 +314,7 @@ if submit_button:
 # ==========================================
 if st.session_state.is_admin:
     st.divider()
-    st.header("Admin Dashboard & Data Export")
+    st.header("📊 Admin Dashboard & Data Export")
     
     df_saved = load_data_from_sheet()
     if not df_saved.empty:
@@ -317,7 +326,7 @@ if st.session_state.is_admin:
         # CSV Download Option
         csv_data = df_saved.to_csv(index=False).encode('utf-8')
         st.download_button(
-            label="Download Survey Responses as CSV",
+            label="📥 Download Survey Responses as CSV",
             data=csv_data,
             file_name="rmg_costing_survey_responses.csv",
             mime="text/csv",
