@@ -6,17 +6,32 @@ from google.oauth2.service_account import Credentials
 # Page Config
 st.set_page_config(
     page_title="RMG Costing Accuracy Survey & Admin Portal",
-    page_icon="",
+    page_icon="📋",
     layout="wide"
 )
 
-# Google Sheets Connection using gspread & secrets
+# Google Sheets Connection using direct dict from secrets
 def get_gsheet_client():
     scope = [
         "https://www.googleapis.com/auth/spreadsheets",
         "https://www.googleapis.com/auth/drive"
     ]
-    creds_dict = dict(st.secrets["connections"]["gsheets"])
+    
+    # St.secrets থেকে সরাসরি ডিকশনারি তৈরি করা (যাতে \n বা PEM এরর না করে)
+    creds_dict = {
+        "type": st.secrets["connections"]["gsheets"]["type"],
+        "project_id": st.secrets["connections"]["gsheets"]["project_id"],
+        "private_key_id": st.secrets["connections"]["gsheets"]["private_key_id"],
+        "private_key": st.secrets["connections"]["gsheets"]["private_key"].replace("\\n", "\n"),
+        "client_email": st.secrets["connections"]["gsheets"]["client_email"],
+        "client_id": st.secrets["connections"]["gsheets"]["client_id"],
+        "auth_uri": st.secrets["connections"]["gsheets"]["auth_uri"],
+        "token_uri": st.secrets["connections"]["gsheets"]["token_uri"],
+        "auth_provider_x509_cert_url": st.secrets["connections"]["gsheets"]["auth_provider_x509_cert_url"],
+        "client_x509_cert_url": st.secrets["connections"]["gsheets"]["client_x509_cert_url"],
+        "universe_domain": st.secrets["connections"]["gsheets"].get("universe_domain", "googleapis.com")
+    }
+    
     creds = Credentials.from_service_account_info(creds_dict, scopes=scope)
     client = gspread.authorize(creds)
     return client
