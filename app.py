@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-import os
+from streamlit_gsheets import GSheetsConnection
 
 # Page Config
 st.set_page_config(
@@ -9,8 +9,9 @@ st.set_page_config(
     layout="wide"
 )
 
-# File to store responses
-DATA_FILE = "survey_responses.csv"
+# Initialize Google Sheets Connection
+# Ensure your secrets.toml has [connections.gsheets] setup
+conn = st.connection("gsheets", type=GSheetsConnection)
 
 # Session State Initialization
 if "custom_questions" not in st.session_state:
@@ -61,7 +62,7 @@ st.sidebar.markdown("""
   * Unchecked = `0` (No / Inactive)
 """)
 
-# IF ADMIN IS LOGGED IN, SHOW ADMIN CONTROLS & DASHBOARD
+# IF ADMIN IS LOGGED IN, SHOW DYNAMIC QUESTION SYSTEM
 if st.session_state.is_admin:
     st.sidebar.divider()
     st.sidebar.header("🛠️ Dynamic Question System")
@@ -105,7 +106,7 @@ else:
     st.sidebar.info("💡 Admin features are locked. Enter the correct password above to unlock.")
 
 # ==========================================
-# MAIN SURVEY FORM (FORM-LESS CONTAINER)
+# MAIN SURVEY FORM
 # ==========================================
 st.header("SECTION A: Demographic & Organizational Profile")
 col1, col2 = st.columns(2)
@@ -124,9 +125,7 @@ st.header("SECTION B: Core Research Variables")
 survey_responses = {}
 checkbox_responses = {}
 
-# ==========================================
 # PART 1: SLIDER QUESTIONS
-# ==========================================
 st.subheader("Part 1: Costing Accuracy & Pre-Calculation")
 part1_questions = [
     ("CA1", "Our pre-costing accurately reflects actual production costs (fabric consumption, trims, CM, logistics)."),
@@ -144,9 +143,7 @@ for code, text in part1_questions:
     )
 st.divider()
 
-# ==========================================
 # PART 2: CHECKBOX QUESTIONS
-# ==========================================
 st.subheader("Part 2: Costing Tools & Strategies Used")
 st.write("Select all tools, software, or strategies your factory regularly utilizes:")
 
@@ -163,9 +160,7 @@ for key, label in tool_options.items():
     checkbox_responses[key] = st.checkbox(label, key=key)
 st.divider()
 
-# ==========================================
-# PART 3: GRADING SCALE (RADIO BUTTONS)
-# ==========================================
+# PART 3: GRADING SCALE
 st.subheader("Part 3: Impact of Costing Errors on Factory Performance")
 grading_questions = [
     ("IMP1", "Impact of inaccurate costing on unexpected profit/margin loss:"),
@@ -184,9 +179,7 @@ for code, text in grading_questions:
     )
 st.divider()
 
-# ==========================================
 # PART 4: SLIDER QUESTIONS
-# ==========================================
 st.subheader("Part 4: Buyer Satisfaction & Order Execution Efficiency")
 part4_questions = [
     ("BS1", "Transparent and accurate pricing builds long-term strategic partnership with buyers."),
@@ -204,7 +197,7 @@ for code, text in part4_questions:
     )
 st.divider()
 
-# Render Dynamically Added Custom Questions from Admin
+# Dynamic Custom Questions Injection
 if st.session_state.custom_questions:
     st.subheader("Additional / Custom Questions")
     for custom_q in st.session_state.custom_questions:
@@ -234,9 +227,7 @@ if st.session_state.custom_questions:
             )
     st.divider()
 
-# ==========================================
 # SECTION C: QUALITATIVE FEEDBACK & SUBMIT
-# ==========================================
 st.header("SECTION C: Open-Ended / Qualitative Feedback")
 q_challenges = st.text_area("1. What are the major challenges you face while preparing pre-costing sheets for complex garment styles?")
 q_erp = st.text_area("2. How does your factory leverage digital tools to improve overall cost efficiency?")
@@ -244,7 +235,7 @@ q_erp = st.text_area("2. How does your factory leverage digital tools to improve
 submit_button = st.button("🚀 Submit Survey Response", type="primary")
 
 # ==========================================
-# DATA SAVING LOGIC
+# DATA SAVING TO GOOGLE SHEETS
 # ==========================================
 if submit_button:
     response_data = {
@@ -260,28 +251,44 @@ if submit_button:
     
     new_df = pd.DataFrame([response_data])
     
-    if not os.path.isfile(DATA_FILE):
-        new_df.to_csv(DATA_FILE, index=False)
-    else:
-        new_df.to_csv(DATA_FILE, mode='a', header=False, index=False)
+    try:
+        # Fetch existing data from Google Sheet
+        existing_data = conn.read(ttl=0)
+        updated_df = pd.concat([existing_data, new_df], ignore_index=False)
         
-    st.balloons()
-    st.success("ধন্যবাদ! আপনার সার্ভে রেসপন্স সফলভাবে সংরক্ষিত হয়েছে।")
+        # Update Google Sheet
+        conn.update(data=updated_df)
+        
+        st.balloons()
+        st.success("ধন্যবাদ! আপনার সার্ভে রেসপন্স সফলভাবে গুগল শিটসে সংরক্ষিত হয়েছে।")
+    except Exception as e:
+        st.error(f"Error saving to Google Sheets: {e}")
 
 # ==========================================
-# ADMIN DASHBOARD (LOCKED UNLESS AUTHENTICATED)
+# ADMIN DASHBOARD & DATA DELETION
 # ==========================================
 if st.session_state.is_admin:
     st.divider()
     st.header("📊 Admin Dashboard & Data Export")
     
-    if os.path.exists(DATA_FILE):
-        df_saved = pd.read_csv(DATA_FILE)
+    try:
+        df_saved = conn.read(ttl=0)
         st.metric(label="Total Survey Responses Collected", value=len(df_saved))
         
-        st.subheader("Live Response Data Preview:")
+        st.subheader("Live Response Data Preview (Google Sheets):")
         st.dataframe(df_saved, use_container_width=True)
         
+        # Delete Specific Row Option
+        st.subheader("🗑️ Delete a Specific Response")
+        if len(df_saved) > 0:
+            row_to_delete = st.selectbox("Select Row Index to Delete:", df_saved.index)
+            if st.button("❌ Delete Selected Response"):
+                df_saved = df_saved.drop(row_to_delete).reset_index(drop=True)
+                conn.update(data=df_saved)
+                st.success(f"Row index {row_to_delete} deleted from Google Sheets!")
+                st.rerun()
+        
+        # CSV Download Option
         csv_data = df_saved.to_csv(index=False).encode('utf-8')
         st.download_button(
             label="📥 Download Survey Responses as CSV",
@@ -290,5 +297,5 @@ if st.session_state.is_admin:
             mime="text/csv",
             type="primary"
         )
-    else:
-        st.warning("No survey responses recorded yet.")
+    except Exception as e:
+        st.warning("Google Sheet key missing or no responses recorded yet.")
