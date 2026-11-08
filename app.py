@@ -123,35 +123,4 @@ with st.form("rmg_survey_form"):
         "Part 2: Merchandising Performance": [
             ("MP1", "Accurate costing helps me negotiate better with buyers without losing the order."),
             ("MP2", "Precise cost sheets reduce internal conflicts between management, production, and merchandising teams."),
-            ("MP3", "I can finalize T&A (Time and Action) calendars much smoother when costing is precise."),
-            ("MP4", "Costing accuracy reduces my stress levels and enhances my daily operational decision-making.")
-        ],
-        "Part 3: Factory Profitability": [
-            ("FP1", "Accurate costing directly minimizes unexpected budget overruns during execution."),
-            ("FP2", "We rarely face unexpected financial losses or negative margins due to costing errors."),
-            ("FP3", "Precise margin calculation improves the overall financial health of our organization.")
-        ],
-        "Part 4: Buyer Satisfaction & Retention": [
-            ("BS1", "Transparent and accurate pricing builds long-term trust with international buyers."),
-            ("BS2", "We experience fewer disputes over post-order price adjustments or revisions."),
-            ("BS3", "Accurate initial quotes lead to higher repeat orders (re-orders) from buyers.")
-        ],
-        "Part 5: Order Execution Efficiency": [
-            ("OE1", "Precise costing prevents material shortages and procurement delays."),
-            ("OE2", "We rarely need to use expensive air freight because material budgets are properly managed."),
-            ("OE3", "Costing accuracy significantly contributes to achieving On-Time Delivery (OTD) targets.")
-        ]
-    }
-    
-    # Append custom questions dynamically
-    for custom_q in st.session_state.custom_questions:
-        sec = custom_q["section"]
-        if sec in sections_dict:
-            sections_dict[sec].append((custom_q["code"], custom_q["text"]))
-
-    likert_responses = {}
-    for section_title, questions in sections_dict.items():
-        st.subheader(section_title)
-        for code, text in questions:
-            likert_responses[code] = st.select_slider(
-                f"**
+            ("MP3", "I can finalize T&A (Time and Action) calendars much smoother when
