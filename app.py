@@ -45,16 +45,17 @@ if st.session_state.is_admin:
     st.sidebar.header("🛠️ Dynamic Question System")
     
     with st.sidebar.form("add_question_form", clear_on_submit=True):
-        new_q_code = st.text_input("Question Code (e.g., CA5, MP5):", placeholder="CA5")
+        new_q_code = st.text_input("Question Code (e.g., CA6, MP5):", placeholder="CA6")
         new_q_text = st.text_area("Question Statement:", placeholder="Enter statement here...")
         new_q_section = st.selectbox(
             "Select Section:",
             [
-                "Part 1: Costing Accuracy",
-                "Part 2: Merchandising Performance",
-                "Part 3: Factory Profitability",
-                "Part 4: Buyer Satisfaction & Retention",
-                "Part 5: Order Execution Efficiency"
+                "Part 1: Costing Accuracy (Independent Variable)",
+                "Part 2: Merchandising Performance (Dependent Variable)",
+                "Part 3: Factory Profitability (Dependent Variable)",
+                "Part 4: Buyer Satisfaction & Retention (Dependent Variable)",
+                "Part 5: Order Execution Efficiency (Dependent Variable)",
+                "Part 6: Digital ERP & Moderating Factors"
             ]
         )
         add_btn = st.form_submit_button("➕ Add Question")
@@ -95,40 +96,51 @@ with st.form("rmg_survey_form"):
         
     st.divider()
     
-    st.header("SECTION B: Core Research Variables")
-    st.info("Scale: 1 = Strongly Disagree, 2 = Disagree, 3 = Neutral, 4 = Agree, 5 = Strongly Agree")
+    st.header("SECTION B: Core Research Variables (Advanced Regression Scale)")
+    st.info("Scale: 0 = Not Applicable / Strongly Disagree, 1 = Disagree, 2 = Neutral, 3 = Agree, 4 = Strongly Agree, 5 = Highly Significant")
     
+    # Expanded sections with comprehensive questions for robust regression & factor analysis
     sections_dict = {
-        "Part 1: Costing Accuracy": [
+        "Part 1: Costing Accuracy (Independent Variable)": [
             ("CA1", "Our pre-costing accurately reflects actual production costs (fabric consumption, trims, CM, logistics)."),
-            ("CA2", "We systematically account for fabric waste and buffer margins in our cost sheets."),
-            ("CA3", "Post-costing analysis is regularly conducted after shipment to evaluate estimation errors."),
-            ("CA4", "Material price volatility (yarn/accessories) is well-predicted and integrated into our quotes.")
+            ("CA2", "We systematically account for fabric waste, shrinkage, and buffer margins in our cost sheets."),
+            ("CA3", "Post-costing variance analysis is regularly conducted after shipment to evaluate estimation errors."),
+            ("CA4", "Material price volatility (yarn, Dyes, accessories) is well-predicted and integrated into our quotes."),
+            ("CA5", "We apply scientific consumption formulas rather than traditional approximations during costing.")
         ],
-        "Part 2: Merchandising Performance": [
-            ("MP1", "Accurate costing helps me negotiate better with buyers without losing the order."),
+        "Part 2: Merchandising Performance (Dependent Variable)": [
+            ("MP1", "Accurate costing helps me negotiate better price points with buyers without losing the order."),
             ("MP2", "Precise cost sheets reduce internal conflicts between management, production, and merchandising teams."),
-            ("MP3", "I can finalize T&A (Time and Action) calendars much smoother when costing is precise."),
-            ("MP4", "Costing accuracy reduces my stress levels and enhances my daily operational decision-making.")
+            ("MP3", "I can finalize T&A (Time and Action) calendars much smoother when costing and material budgets are precise."),
+            ("MP4", "Costing accuracy reduces my stress levels and enhances my daily operational decision-making efficiency."),
+            ("MP5", "Accurate costing enables faster quotation generation and response times to buyer inquiries.")
         ],
-        "Part 3: Factory Profitability": [
-            ("FP1", "Accurate costing directly minimizes unexpected budget overruns during execution."),
-            ("FP2", "We rarely face unexpected financial losses or negative margins due to costing errors."),
-            ("FP3", "Precise margin calculation improves the overall financial health of our organization.")
+        "Part 3: Factory Profitability (Dependent Variable)": [
+            ("FP1", "Accurate costing directly minimizes unexpected budget overruns and hidden losses during order execution."),
+            ("FP2", "We rarely face unexpected negative margins or financial penalties due to costing errors."),
+            ("FP3", "Precise margin calculation significantly improves the overall net profit margin and financial health of our factory."),
+            ("FP4", "Cost accuracy optimization has lowered our overall operational cost wastage over the past year.")
         ],
-        "Part 4: Buyer Satisfaction & Retention": [
-            ("BS1", "Transparent and accurate pricing builds long-term trust with international buyers."),
-            ("BS2", "We experience fewer disputes over post-order price adjustments or revisions."),
-            ("BS3", "Accurate initial quotes lead to higher repeat orders (re-orders) from buyers.")
+        "Part 4: Buyer Satisfaction & Retention (Dependent Variable)": [
+            ("BS1", "Transparent and accurate pricing builds long-term trust and strategic partnership with international buyers."),
+            ("BS2", "We experience fewer financial disputes or post-order price adjustment claims from buyers."),
+            ("BS3", "Accurate initial quotes and smooth execution lead to higher repeat order rates (re-orders) from buyers."),
+            ("BS4", "Buyer audit ratings on our pricing transparency and compliance have improved due to accurate cost documentation.")
         ],
-        "Part 5: Order Execution Efficiency": [
-            ("OE1", "Precise costing prevents material shortages and procurement delays."),
-            ("OE2", "We rarely need to use expensive air freight because material budgets are properly managed."),
-            ("OE3", "Costing accuracy significantly contributes to achieving On-Time Delivery (OTD) targets.")
+        "Part 5: Order Execution Efficiency (Dependent Variable)": [
+            ("OE1", "Precise costing prevents material procurement shortages and delays in the factory floor."),
+            ("OE2", "We rarely need to use expensive air freight for delayed raw materials because material budgets are properly managed."),
+            ("OE3", "Costing accuracy directly contributes to achieving On-Time Delivery (OTD) targets consistently."),
+            ("OE4", "Production efficiency increases because material approvals align seamlessly with the financial budget.")
+        ],
+        "Part 6: Digital ERP & Moderating Factors": [
+            ("MOD1", "Our factory utilizes advanced ERP software or digital automated tools for costing and inventory tracking."),
+            ("MOD2", "Top management provides adequate training and resources for advanced cost estimation practices."),
+            ("MOD3", "Market volatility (external economic shocks, inflation) heavily disrupts our standard costing accuracy.")
         ]
     }
     
-    # Append custom questions dynamically
+    # Append custom questions dynamically if added by admin
     for custom_q in st.session_state.custom_questions:
         sec = custom_q["section"]
         if sec in sections_dict:
@@ -139,10 +151,11 @@ with st.form("rmg_survey_form"):
         st.subheader(section_title)
         for code, text in questions:
             label_text = f"[{code}] {text}"
+            # Slider default value is set to 0 as requested ("জিরোতে থাকবে")
             likert_responses[code] = st.select_slider(
                 label_text,
-                options=[1, 2, 3, 4, 5],
-                value=3,
+                options=[0, 1, 2, 3, 4, 5],
+                value=0,
                 key=code
             )
         st.divider()
