@@ -154,33 +154,4 @@ with st.form("rmg_survey_form"):
         st.subheader(section_title)
         for code, text in questions:
             likert_responses[code] = st.select_slider(
-                f"**[{code}]** {text}",
-                options=[1, 2, 3, 4, 5],
-                value=3,
-                key=code
-            )
-        st.divider() # <--- এখানে st.markdown(---) এর বদলে st.divider() ব্যবহার করা হয়েছে
-        
-    st.header("SECTION C: Open-Ended / Qualitative Feedback")
-    q_challenges = st.text_area("1. What are the major challenges you face while preparing pre-costing sheets for complex garment styles?")
-    q_erp = st.text_area("2. How does your factory leverage digital tools (like ERP software or advanced Excel models) to improve costing accuracy?")
-    
-    submit_button = st.form_submit_button("🚀 Submit Survey Response", type="primary")
-
-# ==========================================
-# DATA SAVING LOGIC
-# ==========================================
-if submit_button:
-    response_data = {
-        "Factory Type": factory_type,
-        "Position": position,
-        "Experience": experience,
-        "Turnover": turnover,
-        **likert_responses,
-        "Challenges": q_challenges,
-        "ERP Usage": q_erp
-    }
-    
-    new_df = pd.DataFrame([response_data])
-    
-    if not os.path.isfile(DATA_FILE):
+                f"**
