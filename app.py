@@ -50,12 +50,10 @@ if st.session_state.is_admin:
         new_q_section = st.selectbox(
             "Select Section:",
             [
-                "Part 1: Costing Accuracy (Independent Variable)",
-                "Part 2: Merchandising Performance (Dependent Variable)",
-                "Part 3: Factory Profitability (Dependent Variable)",
-                "Part 4: Buyer Satisfaction & Retention (Dependent Variable)",
-                "Part 5: Order Execution Efficiency (Dependent Variable)",
-                "Part 6: Digital ERP & Moderating Factors"
+                "Part 1: Costing Accuracy (Sliders)",
+                "Part 2: Costing Tools & Techniques (Checkboxes)",
+                "Part 3: Financial & Operational Impact (Grading Scale)",
+                "Part 4: Buyer Satisfaction & Execution (Sliders)"
             ]
         )
         add_btn = st.form_submit_button("➕ Add Question")
@@ -96,73 +94,111 @@ with st.form("rmg_survey_form"):
         
     st.divider()
     
-    st.header("SECTION B: Core Research Variables (Advanced Regression Scale)")
-    st.info("Scale: 0 = Not Applicable / Strongly Disagree, 1 = Disagree, 2 = Neutral, 3 = Agree, 4 = Strongly Agree, 5 = Highly Significant")
+    survey_responses = {}
+
+    # ==========================================
+    # PART 1: SLIDER QUESTIONS (Costing Accuracy)
+    # ==========================================
+    st.header("Part 1: Costing Accuracy & Pre-Calculation (Slider Scale)")
+    st.info("Scale: 0 = Not Applicable / Strongly Disagree to 5 = Highly Significant")
     
-    # Expanded sections with comprehensive questions for robust regression & factor analysis
-    sections_dict = {
-        "Part 1: Costing Accuracy (Independent Variable)": [
-            ("CA1", "Our pre-costing accurately reflects actual production costs (fabric consumption, trims, CM, logistics)."),
-            ("CA2", "We systematically account for fabric waste, shrinkage, and buffer margins in our cost sheets."),
-            ("CA3", "Post-costing variance analysis is regularly conducted after shipment to evaluate estimation errors."),
-            ("CA4", "Material price volatility (yarn, Dyes, accessories) is well-predicted and integrated into our quotes."),
-            ("CA5", "We apply scientific consumption formulas rather than traditional approximations during costing.")
-        ],
-        "Part 2: Merchandising Performance (Dependent Variable)": [
-            ("MP1", "Accurate costing helps me negotiate better price points with buyers without losing the order."),
-            ("MP2", "Precise cost sheets reduce internal conflicts between management, production, and merchandising teams."),
-            ("MP3", "I can finalize T&A (Time and Action) calendars much smoother when costing and material budgets are precise."),
-            ("MP4", "Costing accuracy reduces my stress levels and enhances my daily operational decision-making efficiency."),
-            ("MP5", "Accurate costing enables faster quotation generation and response times to buyer inquiries.")
-        ],
-        "Part 3: Factory Profitability (Dependent Variable)": [
-            ("FP1", "Accurate costing directly minimizes unexpected budget overruns and hidden losses during order execution."),
-            ("FP2", "We rarely face unexpected negative margins or financial penalties due to costing errors."),
-            ("FP3", "Precise margin calculation significantly improves the overall net profit margin and financial health of our factory."),
-            ("FP4", "Cost accuracy optimization has lowered our overall operational cost wastage over the past year.")
-        ],
-        "Part 4: Buyer Satisfaction & Retention (Dependent Variable)": [
-            ("BS1", "Transparent and accurate pricing builds long-term trust and strategic partnership with international buyers."),
-            ("BS2", "We experience fewer financial disputes or post-order price adjustment claims from buyers."),
-            ("BS3", "Accurate initial quotes and smooth execution lead to higher repeat order rates (re-orders) from buyers."),
-            ("BS4", "Buyer audit ratings on our pricing transparency and compliance have improved due to accurate cost documentation.")
-        ],
-        "Part 5: Order Execution Efficiency (Dependent Variable)": [
-            ("OE1", "Precise costing prevents material procurement shortages and delays in the factory floor."),
-            ("OE2", "We rarely need to use expensive air freight for delayed raw materials because material budgets are properly managed."),
-            ("OE3", "Costing accuracy directly contributes to achieving On-Time Delivery (OTD) targets consistently."),
-            ("OE4", "Production efficiency increases because material approvals align seamlessly with the financial budget.")
-        ],
-        "Part 6: Digital ERP & Moderating Factors": [
-            ("MOD1", "Our factory utilizes advanced ERP software or digital automated tools for costing and inventory tracking."),
-            ("MOD2", "Top management provides adequate training and resources for advanced cost estimation practices."),
-            ("MOD3", "Market volatility (external economic shocks, inflation) heavily disrupts our standard costing accuracy.")
-        ]
+    part1_questions = [
+        ("CA1", "Our pre-costing accurately reflects actual production costs (fabric consumption, trims, CM, logistics)."),
+        ("CA2", "We systematically account for fabric waste, shrinkage, and buffer margins in our cost sheets."),
+        ("CA3", "Post-costing variance analysis is regularly conducted after shipment to evaluate estimation errors."),
+        ("CA4", "Material price volatility (yarn, dyes, accessories) is well-predicted and integrated into quotes.")
+    ]
+    
+    for code, text in part1_questions:
+        survey_responses[code] = st.select_slider(
+            f"[{code}] {text}",
+            options=[0, 1, 2, 3, 4, 5],
+            value=0,
+            key=code
+        )
+    st.divider()
+
+    # ==========================================
+    # PART 2: CHECKBOX QUESTIONS (Tools & Practices)
+    # ==========================================
+    st.header("Part 2: Costing Tools & Strategies Used (Checkboxes)")
+    st.write("Select all the tools, software, or strategies your factory regularly utilizes for cost management:")
+    
+    tool_options = {
+        "TOOL_EXCEL": "Advanced Excel-based Costing Models & Macros",
+        "TOOL_ERP": "Enterprise Resource Planning (ERP) Software (e.g., SAP, Oracle, BlueCherry)",
+        "TOOL_CAD": "Automated CAD Marker & Fabric Consumption Calculators",
+        "TOOL_AI": "AI-driven or Predictive Costing Estimation Tools",
+        "TOOL_HISTORICAL": "Historical Database of Past Orders for Benchmarking",
+        "TOOL_BUFFER": "Standardized Buffer Pricing for Raw Material Price Fluctuations"
     }
     
-    # Append custom questions dynamically if added by admin
-    for custom_q in st.session_state.custom_questions:
-        sec = custom_q["section"]
-        if sec in sections_dict:
-            sections_dict[sec].append((custom_q["code"], custom_q["text"]))
+    checkbox_responses = {}
+    for key, label in tool_options.items():
+        checkbox_responses[key] = st.checkbox(label, key=key)
+    st.divider()
 
-    likert_responses = {}
-    for section_title, questions in sections_dict.items():
-        st.subheader(section_title)
-        for code, text in questions:
-            label_text = f"[{code}] {text}"
-            # Slider default value is set to 0 as requested ("জিরোতে থাকবে")
-            likert_responses[code] = st.select_slider(
-                label_text,
-                options=[0, 1, 2, 3, 4, 5],
-                value=0,
-                key=code
-            )
-        st.divider()
-        
+    # ==========================================
+    # PART 3: GRADING / RADIO BUTTONS (Impact Severity)
+    # ==========================================
+    st.header("Part 3: Impact of Costing Errors on Factory Performance (Grading Scale)")
+    st.info("Grade the severity level: 1 = Low Impact, 2 = Moderate, 3 = High, 4 = Severe, 5 = Critical / Destructive")
+    
+    grading_questions = [
+        ("IMP1", "Impact of inaccurate costing on unexpected profit/margin loss:"),
+        ("IMP2", "Impact of costing mistakes on delayed material procurement and lead time overruns:"),
+        ("IMP3", "Impact on buyer relationship trust and frequency of price dispute claims:"),
+        ("IMP4", "Frequency of emergency air-shipment costs incurred due to poor initial budgeting:")
+    ]
+    
+    for code, text in grading_questions:
+        survey_responses[code] = st.radio(
+            f"[{code}] {text}",
+            options=[1, 2, 3, 4, 5],
+            index=0,
+            horizontal=True,
+            key=code
+        )
+    st.divider()
+
+    # ==========================================
+    # PART 4: SLIDER QUESTIONS (Buyer Satisfaction & Efficiency)
+    # ==========================================
+    st.header("Part 4: Buyer Satisfaction & Order Execution Efficiency (Slider Scale)")
+    
+    part4_questions = [
+        ("BS1", "Transparent and accurate pricing builds long-term strategic partnership with international buyers."),
+        ("BS2", "Accurate initial quotes and smooth execution lead to higher repeat order rates (re-orders) from buyers."),
+        ("OE1", "Precise costing prevents material shortages and procurement delays on the factory floor."),
+        ("OE2", "Costing accuracy directly contributes to achieving On-Time Delivery (OTD) targets consistently.")
+    ]
+    
+    for code, text in part4_questions:
+        survey_responses[code] = st.select_slider(
+            f"[{code}] {text}",
+            options=[0, 1, 2, 3, 4, 5],
+            value=0,
+            key=code
+        )
+    st.divider()
+
+    # Dynamic Custom Questions Injection
+    for custom_q in st.session_state.custom_questions:
+        code = custom_q["code"]
+        text = custom_q["text"]
+        survey_responses[code] = st.select_slider(
+            f"[{code}] {text}",
+            options=[0, 1, 2, 3, 4, 5],
+            value=0,
+            key=code
+        )
+
+    # ==========================================
+    # SECTION C: QUALITATIVE FEEDBACK
+    # ==========================================
     st.header("SECTION C: Open-Ended / Qualitative Feedback")
     q_challenges = st.text_area("1. What are the major challenges you face while preparing pre-costing sheets for complex garment styles?")
-    q_erp = st.text_area("2. How does your factory leverage digital tools (like ERP software or advanced Excel models) to improve costing accuracy?")
+    q_erp = st.text_area("2. How does your factory leverage digital tools to improve overall cost efficiency?")
     
     submit_button = st.form_submit_button("🚀 Submit Survey Response", type="primary")
 
@@ -170,12 +206,14 @@ with st.form("rmg_survey_form"):
 # DATA SAVING LOGIC
 # ==========================================
 if submit_button:
+    # Combine all response dictionaries
     response_data = {
         "Factory Type": factory_type,
         "Position": position,
         "Experience": experience,
         "Turnover": turnover,
-        **likert_responses,
+        **survey_responses,
+        **{k: (1 if v else 0) for k, v in checkbox_responses.items()}, # Convert checkboxes to 1/0 for stats
         "Challenges": q_challenges,
         "ERP Usage": q_erp
     }
