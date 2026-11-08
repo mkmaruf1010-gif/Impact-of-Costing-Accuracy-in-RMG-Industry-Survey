@@ -20,7 +20,7 @@ if "is_admin" not in st.session_state:
     st.session_state.is_admin = False
 
 st.title("📋 Impact of Costing Accuracy in RMG Industry Survey")
-st.markdown("*Academic Research Survey on Merchandising Performance, Profitability, Buyer Satisfaction, and Order Execution Efficiency.*")
+st.markdown("Academic Research Survey on Merchandising Performance, Profitability, Buyer Satisfaction, and Order Execution Efficiency.")
 st.divider()
 
 # ==========================================
@@ -28,10 +28,7 @@ st.divider()
 # ==========================================
 st.sidebar.header("🔐 Admin Portal Access")
 
-# Password input
 admin_password_input = st.sidebar.text_input("Enter Admin Password:", type="password", placeholder="Enter password...")
-
-# Default admin password is set to "admin123"
 ADMIN_SECRET_KEY = "admin123"
 
 if admin_password_input == ADMIN_SECRET_KEY:
@@ -90,23 +87,11 @@ with st.form("rmg_survey_form"):
     col1, col2 = st.columns(2)
     
     with col1:
-        factory_type = st.selectbox(
-            "1. Type of Factory / Organization:",
-            ["Knitwear", "Woven", "Sweater", "Denim/Bottoms", "Buying House"]
-        )
-        position = st.selectbox(
-            "2. Your Current Position/Role:",
-            ["Merchandiser / Assistant Merchandiser", "Senior Merchandiser / Manager", "Head of Merchandising / Director", "Costing & Pricing Analyst"]
-        )
+        factory_type = st.selectbox("1. Type of Factory / Organization:", ["Knitwear", "Woven", "Sweater", "Denim/Bottoms", "Buying House"])
+        position = st.selectbox("2. Your Current Position/Role:", ["Merchandiser / Assistant Merchandiser", "Senior Merchandiser / Manager", "Head of Merchandising / Director", "Costing & Pricing Analyst"])
     with col2:
-        experience = st.selectbox(
-            "3. Total Years of Experience in RMG Merchandising:",
-            ["1–3 years", "4–7 years", "8–12 years", "12+ years"]
-        )
-        turnover = st.selectbox(
-            "4. Annual Export Turnover (USD):",
-            ["Less than $5 Million", "$5M - $15M", "$15M - $30M", "Above $30M"]
-        )
+        experience = st.selectbox("3. Total Years of Experience in RMG Merchandising:", ["1–3 years", "4–7 years", "8–12 years", "12+ years"])
+        turnover = st.selectbox("4. Annual Export Turnover (USD):", ["Less than $5 Million", "$5M - $15M", "$15M - $30M", "Above $30M"])
         
     st.divider()
     
@@ -123,4 +108,96 @@ with st.form("rmg_survey_form"):
         "Part 2: Merchandising Performance": [
             ("MP1", "Accurate costing helps me negotiate better with buyers without losing the order."),
             ("MP2", "Precise cost sheets reduce internal conflicts between management, production, and merchandising teams."),
-            ("MP3", "I can finalize T&A (Time and Action) calendars much smoother when
+            ("MP3", "I can finalize T&A (Time and Action) calendars much smoother when costing is precise."),
+            ("MP4", "Costing accuracy reduces my stress levels and enhances my daily operational decision-making.")
+        ],
+        "Part 3: Factory Profitability": [
+            ("FP1", "Accurate costing directly minimizes unexpected budget overruns during execution."),
+            ("FP2", "We rarely face unexpected financial losses or negative margins due to costing errors."),
+            ("FP3", "Precise margin calculation improves the overall financial health of our organization.")
+        ],
+        "Part 4: Buyer Satisfaction & Retention": [
+            ("BS1", "Transparent and accurate pricing builds long-term trust with international buyers."),
+            ("BS2", "We experience fewer disputes over post-order price adjustments or revisions."),
+            ("BS3", "Accurate initial quotes lead to higher repeat orders (re-orders) from buyers.")
+        ],
+        "Part 5: Order Execution Efficiency": [
+            ("OE1", "Precise costing prevents material shortages and procurement delays."),
+            ("OE2", "We rarely need to use expensive air freight because material budgets are properly managed."),
+            ("OE3", "Costing accuracy significantly contributes to achieving On-Time Delivery (OTD) targets.")
+        ]
+    }
+    
+    # Append custom questions dynamically
+    for custom_q in st.session_state.custom_questions:
+        sec = custom_q["section"]
+        if sec in sections_dict:
+            sections_dict[sec].append((custom_q["code"], custom_q["text"]))
+
+    likert_responses = {}
+    for section_title, questions in sections_dict.items():
+        st.subheader(section_title)
+        for code, text in questions:
+            label_text = f"[{code}] {text}"
+            likert_responses[code] = st.select_slider(
+                label_text,
+                options=[1, 2, 3, 4, 5],
+                value=3,
+                key=code
+            )
+        st.divider()
+        
+    st.header("SECTION C: Open-Ended / Qualitative Feedback")
+    q_challenges = st.text_area("1. What are the major challenges you face while preparing pre-costing sheets for complex garment styles?")
+    q_erp = st.text_area("2. How does your factory leverage digital tools (like ERP software or advanced Excel models) to improve costing accuracy?")
+    
+    submit_button = st.form_submit_button("🚀 Submit Survey Response", type="primary")
+
+# ==========================================
+# DATA SAVING LOGIC
+# ==========================================
+if submit_button:
+    response_data = {
+        "Factory Type": factory_type,
+        "Position": position,
+        "Experience": experience,
+        "Turnover": turnover,
+        **likert_responses,
+        "Challenges": q_challenges,
+        "ERP Usage": q_erp
+    }
+    
+    new_df = pd.DataFrame([response_data])
+    
+    if not os.path.isfile(DATA_FILE):
+        new_df.to_csv(DATA_FILE, index=False)
+    else:
+        new_df.to_csv(DATA_FILE, mode='a', header=False, index=False)
+        
+    st.balloons()
+    st.success("ধন্যবাদ! আপনার সার্ভে রেসপন্স সফলভাবে সংরক্ষিত হয়েছে।")
+
+# ==========================================
+# ADMIN DASHBOARD (LOCKED UNLESS AUTHENTICATED)
+# ==========================================
+if st.session_state.is_admin:
+    st.divider()
+    st.header("📊 Admin Dashboard & Data Export")
+    
+    if os.path.exists(DATA_FILE):
+        df_saved = pd.read_csv(DATA_FILE)
+        st.metric(label="Total Survey Responses Collected", value=len(df_saved))
+        
+        st.subheader("Live Response Data Preview:")
+        st.dataframe(df_saved, use_container_width=True)
+        
+        csv_data = df_saved.to_csv(index=False).encode('utf-8')
+        st.download_button(
+            label="📥 Download Survey Responses as CSV",
+            data=csv_data,
+            file_name="rmg_costing_survey_responses.csv",
+            mime="text/csv",
+            type="primary"
+        )
+    else:
+        st.warning("No survey responses recorded yet.")
