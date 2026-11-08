@@ -75,29 +75,29 @@ if "custom_questions" not in st.session_state:
 if "is_admin" not in st.session_state:
     st.session_state.is_admin = False
 
-st.title("📋 Impact of Costing Accuracy in RMG Industry Survey")
+st.title(" Impact of Costing Accuracy in RMG Industry Survey")
 st.markdown("Academic Research Survey on Merchandising Performance, Profitability, Buyer Satisfaction, and Order Execution Efficiency.")
 st.divider()
 
 # ==========================================
 # SIDEBAR: ADMIN LOGIN, CODING LEGEND & PANEL
 # ==========================================
-st.sidebar.header("🔐 Admin Portal Access")
+st.sidebar.header(" Admin Portal Access")
 
 admin_password_input = st.sidebar.text_input("Enter Admin Password:", type="password", placeholder="Enter password...")
-ADMIN_SECRET_KEY = "admin123"
+ADMIN_SECRET_KEY = "buftAmm"
 
 if admin_password_input == ADMIN_SECRET_KEY:
     st.session_state.is_admin = True
-    st.sidebar.success("🔓 Admin Access Granted!")
+    st.sidebar.success(" Admin Access Granted!")
 else:
     if admin_password_input:
-        st.sidebar.error("❌ Incorrect Password!")
+        st.sidebar.error(" Incorrect Password!")
     st.session_state.is_admin = False
 
 # Scale & Coding Legend in Sidebar
 st.sidebar.divider()
-st.sidebar.header("📊 Scale & Coding Legend")
+st.sidebar.header(" Scale & Coding Legend")
 st.sidebar.markdown("""
 * **Slider Scale (0-5):** 
   * `0` = Not Applicable / Strongly Disagree
@@ -120,7 +120,7 @@ st.sidebar.markdown("""
 # IF ADMIN IS LOGGED IN, SHOW ADMIN CONTROLS
 if st.session_state.is_admin:
     st.sidebar.divider()
-    st.sidebar.header("🛠️ Dynamic Question System")
+    st.sidebar.header(" Dynamic Question System")
     
     with st.sidebar.form("add_question_form", clear_on_submit=True):
         new_q_code = st.text_input("Question Code (e.g., CA6, MP5):", placeholder="CA6")
@@ -138,7 +138,7 @@ if st.session_state.is_admin:
             "Select Question Type:",
             ["Slider (0-5)", "Grading Scale (1-5)", "Checkbox"]
         )
-        add_btn = st.form_submit_button("➕ Add Question")
+        add_btn = st.form_submit_button(" Add Question")
 
         if add_btn:
             if new_q_code and new_q_text:
@@ -159,6 +159,18 @@ if st.session_state.is_admin:
             st.sidebar.caption(f"**[{q['code']}]** {q['text']} *({q['type']})*")
 else:
     st.sidebar.info("💡 Admin features are locked. Enter the correct password above to unlock.")
+    # ==========================================
+# SIDEBAR FOOTER: DEVELOPER CREDIT
+# ==========================================
+st.sidebar.markdown("---")
+st.sidebar.markdown(
+    """
+    <div style='text-align: center; color: gray; font-size: 13px;'>
+        Developed by <b>Md. Mehedi Khan</b>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
 
 # ==========================================
 # MAIN SURVEY FORM
@@ -287,7 +299,7 @@ st.header("SECTION C: Open-Ended / Qualitative Feedback")
 q_challenges = st.text_area("1. What are the major challenges you face while preparing pre-costing sheets for complex garment styles?")
 q_erp = st.text_area("2. How does your factory leverage digital tools to improve overall cost efficiency?")
 
-submit_button = st.button("🚀 Submit Survey Response", type="primary")
+submit_button = st.button(" Submit Survey Response", type="primary")
 
 # ==========================================
 # DATA SAVING TO GOOGLE SHEETS
@@ -314,7 +326,7 @@ if submit_button:
 # ==========================================
 if st.session_state.is_admin:
     st.divider()
-    st.header("📊 Admin Dashboard & Data Export")
+    st.header("Admin Dashboard & Data Export")
     
     df_saved = load_data_from_sheet()
     if not df_saved.empty:
@@ -326,7 +338,7 @@ if st.session_state.is_admin:
         # CSV Download Option
         csv_data = df_saved.to_csv(index=False).encode('utf-8')
         st.download_button(
-            label="📥 Download Survey Responses as CSV",
+            label="Download Survey Responses as CSV",
             data=csv_data,
             file_name="rmg_costing_survey_responses.csv",
             mime="text/csv",
