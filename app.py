@@ -70,7 +70,7 @@ if st.session_state.is_admin:
                     "code": new_q_code,
                     "text": new_q_text,
                     "section": new_q_section
-                >})
+                }) # <--- এখানে অতিরিক্ত '>' চিহ্নটি সরিয়ে ঠিক করা হয়েছে
                 st.sidebar.success(f"Question '{new_q_code}' added successfully!")
             else:
                 st.sidebar.error("Please fill in both Code and Statement.")
@@ -161,60 +161,4 @@ with st.form("rmg_survey_form"):
                 value=3,
                 key=code
             )
-        st.markdown("---")
-        
-    st.header("SECTION C: Open-Ended / Qualitative Feedback")
-    q_challenges = st.text_area("1. What are the major challenges you face while preparing pre-costing sheets for complex garment styles?")
-    q_erp = st.text_area("2. How does your factory leverage digital tools (like ERP software or advanced Excel models) to improve costing accuracy?")
-    
-    submit_button = st.form_submit_button("🚀 Submit Survey Response", type="primary")
-
-# ==========================================
-# DATA SAVING LOGIC
-# ==========================================
-if submit_button:
-    response_data = {
-        "Factory Type": factory_type,
-        "Position": position,
-        "Experience": experience,
-        "Turnover": turnover,
-        **likert_responses,
-        "Challenges": q_challenges,
-        "ERP Usage": q_erp
-    }
-    
-    new_df = pd.DataFrame([response_data])
-    
-    if not os.path.isfile(DATA_FILE):
-        new_df.to_csv(DATA_FILE, index=False)
-    else:
-        new_df.to_csv(DATA_FILE, mode='a', header=False, index=False)
-        
-    st.balloons()
-    st.success("ধন্যবাদ! আপনার সার্ভে রেসপন্স সফলভাবে সংরক্ষিত হয়েছে।")
-
-# ==========================================
-# ADMIN DASHBOARD (LOCKED UNLESS AUTHENTICATED)
-# ==========================================
-if st.session_state.is_admin:
-    st.divider()
-    st.header("📊 Admin Dashboard & Data Export")
-    
-    if os.path.exists(DATA_FILE):
-        df_saved = pd.read_csv(DATA_FILE)
-        st.metric(label="Total Survey Responses Collected", value=len(df_saved))
-        
-        st.subheader("Live Response Data Preview:")
-        st.dataframe(df_saved, use_container_width=True)
-        
-        # CSV Download Button
-        csv_data = df_saved.to_csv(index=False).encode('utf-8')
-        st.download_button(
-            label="📥 Download Survey Responses as CSV",
-            data=csv_data,
-            file_name="rmg_costing_survey_responses.csv",
-            mime="text/csv",
-            type="primary"
-        )
-    else:
-        st.warning("No survey responses recorded yet.")
+        st.markdown
