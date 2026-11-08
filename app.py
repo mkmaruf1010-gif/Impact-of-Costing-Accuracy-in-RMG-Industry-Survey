@@ -20,9 +20,7 @@ if "is_admin" not in st.session_state:
     st.session_state.is_admin = False
 
 st.title("📋 Impact of Costing Accuracy in RMG Industry Survey")
-st.markdown("""
-*Academic Research Survey on Merchandising Performance, Profitability, Buyer Satisfaction, and Order Execution Efficiency.*
-""")
+st.markdown("*Academic Research Survey on Merchandising Performance, Profitability, Buyer Satisfaction, and Order Execution Efficiency.*")
 st.divider()
 
 # ==========================================
@@ -33,7 +31,7 @@ st.sidebar.header("🔐 Admin Portal Access")
 # Password input
 admin_password_input = st.sidebar.text_input("Enter Admin Password:", type="password", placeholder="Enter password...")
 
-# Default admin password is set to "admin123" (You can change it here)
+# Default admin password is set to "admin123"
 ADMIN_SECRET_KEY = "admin123"
 
 if admin_password_input == ADMIN_SECRET_KEY:
@@ -70,7 +68,7 @@ if st.session_state.is_admin:
                     "code": new_q_code,
                     "text": new_q_text,
                     "section": new_q_section
-                }) # <--- এখানে অতিরিক্ত '>' চিহ্নটি সরিয়ে ঠিক করা হয়েছে
+                })
                 st.sidebar.success(f"Question '{new_q_code}' added successfully!")
             else:
                 st.sidebar.error("Please fill in both Code and Statement.")
@@ -81,7 +79,7 @@ if st.session_state.is_admin:
         for q in st.session_state.custom_questions:
             st.sidebar.caption(f"**[{q['code']}]** {q['text']}")
 else:
-    st.sidebar.info("💡 Admin features (Adding questions & viewing data) are locked. Enter the correct password above to unlock.")
+    st.sidebar.info("💡 Admin features are locked. Enter the correct password above to unlock.")
 
 # ==========================================
 # MAIN FORM (FOR RESPONDENTS)
@@ -161,4 +159,28 @@ with st.form("rmg_survey_form"):
                 value=3,
                 key=code
             )
-        st.markdown
+        st.divider() # <--- এখানে st.markdown(---) এর বদলে st.divider() ব্যবহার করা হয়েছে
+        
+    st.header("SECTION C: Open-Ended / Qualitative Feedback")
+    q_challenges = st.text_area("1. What are the major challenges you face while preparing pre-costing sheets for complex garment styles?")
+    q_erp = st.text_area("2. How does your factory leverage digital tools (like ERP software or advanced Excel models) to improve costing accuracy?")
+    
+    submit_button = st.form_submit_button("🚀 Submit Survey Response", type="primary")
+
+# ==========================================
+# DATA SAVING LOGIC
+# ==========================================
+if submit_button:
+    response_data = {
+        "Factory Type": factory_type,
+        "Position": position,
+        "Experience": experience,
+        "Turnover": turnover,
+        **likert_responses,
+        "Challenges": q_challenges,
+        "ERP Usage": q_erp
+    }
+    
+    new_df = pd.DataFrame([response_data])
+    
+    if not os.path.isfile(DATA_FILE):
