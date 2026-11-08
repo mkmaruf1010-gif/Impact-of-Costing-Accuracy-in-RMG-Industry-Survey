@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
-from streamlit_gsheets import GSheetsConnection
+import gspread
+from google.oauth2.service_account import Credentials
 
 # Page Config
 st.set_page_config(
@@ -9,8 +10,39 @@ st.set_page_config(
     layout="wide"
 )
 
-# Initialize Google Sheets Connection
-conn = st.connection("gsheets", type=GSheetsConnection)
+# Google Sheets Connection using gspread & secrets
+def get_gsheet_client():
+    scope = [
+        "https://www.googleapis.com/auth/spreadsheets",
+        "https://www.googleapis.com/auth/drive"
+    ]
+    creds_dict = dict(st.secrets["connections"]["gsheets"])
+    creds = Credentials.from_service_account_info(creds_dict, scopes=scope)
+    client = gspread.authorize(creds)
+    return client
+
+# Spreadsheet URL
+SPREADSHEET_URL = "https://docs.google.com/spreadsheets/d/1UnDMS2Ko5XGS8Fu4CugtV1lKhCTNQ8BVKEA5HCGmPFQ/edit"
+
+def load_data_from_sheet():
+    try:
+        client = get_gsheet_client()
+        sheet = client.open_by_url(SPREADSHEET_URL).sheet1
+        data = sheet.get_all_records()
+        return pd.DataFrame(data)
+    except Exception as e:
+        return pd.DataFrame()
+
+def save_data_to_sheet(new_row_df):
+    try:
+        client = get_gsheet_client()
+        sheet = client.open_by_url(SPREADSHEET_URL).sheet1
+        row_values = new_row_df.iloc[0].tolist()
+        sheet.append_row(row_values)
+        return True
+    except Exception as e:
+        st.error(f"Error saving to Google Sheets: {e}")
+        return False
 
 # Session State Initialization
 if "custom_questions" not in st.session_state:
@@ -249,16 +281,9 @@ if submit_button:
     }
     
     new_df = pd.DataFrame([response_data])
-    
-    try:
-        existing_data = conn.read(ttl=0)
-        updated_df = pd.concat([existing_data, new_df], ignore_index=False)
-        conn.update(data=updated_df)
-        
+    if save_data_to_sheet(new_df):
         st.balloons()
         st.success("ধন্যবাদ! আপনার সার্ভে রেসপন্স সফলভাবে গুগল শিটসে সংরক্ষিত হয়েছে।")
-    except Exception as e:
-        st.error(f"Error saving to Google Sheets: {e}")
 
 # ==========================================
 # ADMIN DASHBOARD & DATA DELETION
@@ -267,22 +292,12 @@ if st.session_state.is_admin:
     st.divider()
     st.header("📊 Admin Dashboard & Data Export")
     
-    try:
-        df_saved = conn.read(ttl=0)
+    df_saved = load_data_from_sheet()
+    if not df_saved.empty:
         st.metric(label="Total Survey Responses Collected", value=len(df_saved))
         
         st.subheader("Live Response Data Preview (Google Sheets):")
         st.dataframe(df_saved, use_container_width=True)
-        
-        # Delete Specific Row Option
-        st.subheader("🗑️ Delete a Specific Response")
-        if len(df_saved) > 0:
-            row_to_delete = st.selectbox("Select Row Index to Delete:", df_saved.index)
-            if st.button("❌ Delete Selected Response"):
-                df_saved = df_saved.drop(row_to_delete).reset_index(drop=True)
-                conn.update(data=df_saved)
-                st.success(f"Row index {row_to_delete} deleted from Google Sheets!")
-                st.rerun()
         
         # CSV Download Option
         csv_data = df_saved.to_csv(index=False).encode('utf-8')
@@ -293,5 +308,5 @@ if st.session_state.is_admin:
             mime="text/csv",
             type="primary"
         )
-    except Exception as e:
-        st.warning("Google Sheet key missing or no responses recorded yet.")
+    else:
+        st.warning("No survey responses recorded yet or unable to connect to Google Sheet.")
