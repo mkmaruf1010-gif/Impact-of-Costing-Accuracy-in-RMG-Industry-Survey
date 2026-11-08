@@ -61,7 +61,7 @@ st.divider()
 st.sidebar.header("🔐 Admin Portal Access")
 
 admin_password_input = st.sidebar.text_input("Enter Admin Password:", type="password", placeholder="Enter password...")
-ADMIN_SECRET_KEY = "admin123"
+ADMIN_SECRET_KEY = "jamilmc"
 
 if admin_password_input == ADMIN_SECRET_KEY:
     st.session_state.is_admin = True
